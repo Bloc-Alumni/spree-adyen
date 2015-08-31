@@ -8,6 +8,8 @@ module Spree
       @notification = AdyenNotification.log(params)
       @notification.handle!
       if @notification.event_code == "REFUND"
+        #this exists purely to log the transaction ID of the refund. It might make sense to
+        #refactor this so that it lives elswhere.
         @payment = Spree::Payment.find_by(response_code: @notification.original_reference)
         @refund = Spree::Refund.where(payment_id: @payment.id).last
         @refund.transaction_id = @notification.psp_reference

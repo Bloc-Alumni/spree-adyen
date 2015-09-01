@@ -7,7 +7,7 @@ module Spree
     preference :shared_secret, :string
 
     def source_required?
-      true
+      false
     end
 
     def payment_source_class
@@ -22,7 +22,7 @@ module Spree
     # Adyen Hosted Payment Pages where we wouldn't keep # the credit card object
     # as that entered outside of the store forms
     def actions
-      %w{capture void authorize}
+      %w{capture void credit}
     end
 
     # Indicates whether its possible to void the payment.

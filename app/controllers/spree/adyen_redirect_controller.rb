@@ -6,26 +6,29 @@ module Spree
 
     def confirm
 
-      @payment = current_order.payments.find_by_identifier(extract_payment_identifier_from_merchant_reference(params[:merchantReference]))
-      @payment.response_code = params[:pspReference]
+      order = current_order
 
-      if authorized?
-        @payment.pend
-        @payment.save
-      elsif pending?
-        # Leave in payment in processing state and wait for update from Notification
-        @payment.save
-      else
-        @payment.failure
-        @payment.save
-
+      unless authorized?
         flash.notice = Spree.t(:payment_processing_failed)
-        redirect_to checkout_state_path(current_order.state) and return
+        redirect_to checkout_state_path(order.state) and return
       end
 
-      current_order.next
+      #manually set up the payment, constructed from adyen params & order details
+      payment  = order.payments.find_or_initialize_by(identifier: order.number)
+      payment.amount=current_order.total
+      payment.payment_method=payment_method
+      payment.response_code=params[:pspReference]
+      payment.save!
 
-      redirect_to redirect_path and return
+      order.next!
+
+      if order.complete?
+        flash.notice = Spree.t(:order_processed_successfully)
+        redirect_to order_path(order, :token => order.guest_token)
+      else
+        redirect_to checkout_state_path(order.state)
+      end
+
     end
 
 

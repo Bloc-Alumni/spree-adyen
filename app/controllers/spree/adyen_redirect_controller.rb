@@ -14,12 +14,13 @@ module Spree
       end
 
       #manually set up the payment, constructed from adyen params & order details
-      payment  = order.payments.find_or_initialize_by(identifier: order.number)
+      payment = order.payments.find_or_initialize_by(identifier: order.number)
       payment.amount=current_order.total
       payment.payment_method=payment_method
       payment.response_code=params[:pspReference]
       payment.save!
 
+      #try to increment the order steps. Next step should take us to completion...
       order.next!
 
       if order.complete?

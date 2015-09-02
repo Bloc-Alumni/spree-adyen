@@ -96,9 +96,9 @@ class AdyenNotification < ActiveRecord::Base
   end
 
   def store_profile_from_alias(payment)
-    payment.source.update_attribute :gateway_customer_profile_id, additional_data_alias
+    payment.source.update_attributes(gateway_customer_profile_id: additional_data_alias) unless payment.source.nil?
   end
-  
+
   def capture_available?
     !!operations['CAPTURE']
   end

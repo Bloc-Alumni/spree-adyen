@@ -1,7 +1,6 @@
 source 'https://rubygems.org'
 
-branch = '2-3-stable'
-gem 'spree', github: 'spree/spree', branch: branch
+gem 'spree', github: 'spree/spree', branch: '2-4-stable'
 
 gem 'coffee-rails', '~> 4.0.0'
 gem 'sass-rails', '~> 4.0.0'

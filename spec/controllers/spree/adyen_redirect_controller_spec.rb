@@ -3,8 +3,16 @@ require 'spec_helper'
 module Spree
   describe AdyenRedirectController do
     let(:order) { create(:order_with_line_items, state: "payment") }
+    let(:gateway_preferences){ gateway_preferences }
 
-    context "Adyen HPP Gateway" do
+    def gateway_preferences
+      { api_username: test_credentials['api_username'],
+        api_password: test_credentials['api_password'],
+        merchant_account: test_credentials['merchant_account'],
+        public_key: test_credentials['public_key']}
+    end
+
+    context "Adyen HPP Gateway", external: true do
       def params
         { "merchantReference"=>"R183301255",
           "skinCode"=>"Nonenone",
@@ -18,7 +26,7 @@ module Spree
       let(:payment_method) { Gateway::AdyenHPP.create(name: "Adyen") }
 
       before do
-        expect(controller).to receive(:current_order).and_return order
+        allow(controller).to receive(:current_order).and_return order
         expect(controller).to receive(:check_signature)
         expect(controller).to receive(:payment_method).and_return payment_method
       end
@@ -43,8 +51,8 @@ module Spree
         expect(response).to redirect_to spree.order_path(order, :token => order.guest_token)
       end
 
-      pending "test check signature filter"
-      pending "grab payment method by parameter (possibly merchantReturnData passed via session payment params)"
+      #pending "test check signature filter"
+      #pending "grab payment method by parameter (possibly merchantReturnData passed via session payment params)"
     end
 
     context "Adyen 3-D redirect" do
@@ -84,7 +92,7 @@ module Spree
         end
       end
 
-      context "reaching Adyen API", external: true do
+      context "reaching Adyen API" do
         let(:params) do
           { MD: test_credentials["controller_md"], PaRes: test_credentials["controller_pa_response"] }
         end
@@ -92,24 +100,21 @@ module Spree
         let!(:gateway) do
           Gateway::AdyenPaymentEncrypted.create!(
             name: "Adyen",
-            preferred_api_username: test_credentials["api_username"],
-            preferred_api_password: test_credentials["api_password"],
-            preferred_merchant_account: test_credentials["merchant_account"]
+            preferences: gateway_preferences
           )
         end
 
         before do
           order.user_id = 1
-          controller.stub(current_order: order)
-
-          ActionController::TestRequest.any_instance.stub(:ip).and_return("127.0.0.1")
-          ActionController::TestRequest.any_instance.stub_chain(:headers, env: env)
+          allow(controller).to receive(:current_order).and_return(order)
+          allow_any_instance_of( ActionController::TestRequest).to receive(:ip).and_return("127.0.0.1")
+          allow_any_instance_of(ActionController::TestRequest).to receive_message_chain(:headers, env: env)
         end
 
         it "redirects user to confirm step" do
           VCR.use_cassette("3D-Secure-authorise-redirect-controller") do
             spree_get :authorise3d, params, { adyen_gateway_name: gateway.class.name, adyen_gateway_id: gateway.id }
-            expect(response).to redirect_to redirect_to spree.checkout_state_path("confirm")
+            expect(response.redirect_url).to include(spree.checkout_state_path("confirm"))
           end
         end
 

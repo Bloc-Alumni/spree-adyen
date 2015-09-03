@@ -11,7 +11,7 @@ module Spree
         subject.stub_chain(:provider, authorise_payment: response)
       end
 
-      it "adds processing api calls to response object" do
+      it "adds processing api calls to response object", external: true do
         result = subject.authorize(30000, create(:credit_card))
 
         expect(result.authorization).to eq response.psp_reference
@@ -40,7 +40,7 @@ module Spree
 
       let(:cc) { create(:credit_card) }
 
-      it "adds processing api calls to response object" do
+      it "adds processing api calls to response object", external: true do
         expect {
           subject.authorize(30000, cc, options)
         }.not_to raise_error
@@ -51,7 +51,7 @@ module Spree
         }.not_to raise_error
       end
 
-      it "user order email as shopper reference when theres no user" do
+      it "user order email as shopper reference when theres no user", external: true do
         cc.gateway_customer_profile_id = "123"
         options[:customer_id] = nil
 
@@ -70,7 +70,7 @@ module Spree
         subject.stub_chain(:provider, authorise_payment: response)
       end
 
-      it "response obj print friendly message" do
+      it "response obj print friendly message", external: true do
         result = subject.authorize(30000, create(:credit_card))
         expect(result.to_s).to include(response.result_code)
         expect(result.to_s).to include(response.refusal_reason)
@@ -97,7 +97,7 @@ module Spree
       end
 
       it "builds authorise details options" do
-        expect(subject).to receive(:build_authorise_details)
+        expect(subject).to receive(:build_authorise_options)
         subject.create_profile payment
       end
 
@@ -135,9 +135,8 @@ module Spree
         subject.preferred_api_password = test_credentials["api_password"]
       end
 
-      it "brings last recurring contract info", external: true do
+      it "brings last recurring contract info" do
         source.number = "5555444433331111"
-
         VCR.use_cassette "add_contract" do
           subject.add_contract source, user, shopper_ip
         end
@@ -172,19 +171,19 @@ module Spree
       let(:payment) { double("Payment", request_env: {}) }
 
       it "returns browser info when 3D secure is required" do
-        expect(subject.build_authorise_details payment).to have_key :browser_info
+        expect(subject.build_authorise_options amount, source, gateway_options).to have_key :browser_info
       end
 
       context "doesnt require 3d secure" do
         before { subject.stub require_3d_secure?: false }
 
         it "doesnt return browser info" do
-          expect(subject.build_authorise_details payment).to_not have_key :browser_info
+          expect(subject.build_authorise_options amount, source, gateway_options).to_not have_key :browser_info
         end
       end
     end
 
-    context "real external profile creation", external: true do
+    context "real external profile creation" do
       before do
         subject.preferred_merchant_account = test_credentials["merchant_account"]
         subject.preferred_api_username = test_credentials["api_username"]
@@ -195,7 +194,7 @@ module Spree
         user = stub_model(LegacyUser, email: "spree@example.com", id: rand(50))
         stub_model(Order, id: 1, number: "R#{Time.now.to_i}-test", email: "spree@example.com", last_ip_address: "127.0.0.1", user: user)
       end
-      
+
       it "sets profiles" do
         credit_card = CreditCard.new do |cc|
           cc.name = "Washington Braga"

@@ -43,6 +43,7 @@ module Spree
         response = provider.capture_payment(response_code, value)
 
         if response.success?
+          #authorization should return nil or we will unintentionally overwrite the original psp_reference in the DB.
           def response.authorization; nil; end
           def response.avs_result; {}; end
           def response.cvv_result; {}; end
@@ -109,6 +110,7 @@ module Spree
 
         provider.authorise3d_payment(md, pa_response, ip, browser_info)
       end
+
 
       def build_authorise_options(amount, source, gateway_options)
         if gateway_options[:request_env].is_a?(Hash) && require_3d_secure?(amount, source, gateway_options)
@@ -220,8 +222,7 @@ module Spree
             amount = 0
 
             # Still build options as payment may requre 3D Secure
-            options = build_authorise_details payment.gateway_options
-
+            options = build_authorise_options(amount, payment.source, payment.gateway_options)
             response = provider.authorise_payment payment.gateway_options[:order_id], amount, shopper, card, options
 
             if response.success?

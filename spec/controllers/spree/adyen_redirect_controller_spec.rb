@@ -75,7 +75,7 @@ module Spree
 
           expect(Gateway::AdyenPaymentEncrypted).to receive(:find).and_return gateway
           expect(gateway).to receive(:authorise3d).and_return double("Response", success?: true, psp_reference: 1)
-          gateway.stub_chain :provider, list_recurring_details: double("RecurringDetails", details: [])
+          allow(gateway).to receive_message_chain :provider, list_recurring_details: double("RecurringDetails", details: [])
         end
 
         it "redirects user if no recurring detail is returned" do
@@ -85,7 +85,7 @@ module Spree
 
         it "payment need to be in processing state so it's not authorised twice" do
           details = { card: { expiry_date: 1.year.from_now, number: "1111" }, recurring_detail_reference: "123432423" }
-          gateway.stub_chain :provider, list_recurring_details: double("RecurringDetails", details: [details])
+          allow(gateway).to receive_message_chain :provider, list_recurring_details: double("RecurringDetails", details: [details])
 
           spree_get :authorise3d, params, { adyen_gateway_name: gateway.class.name, adyen_gateway_id: gateway.id }
           expect(Payment.last.state).to eq "processing"

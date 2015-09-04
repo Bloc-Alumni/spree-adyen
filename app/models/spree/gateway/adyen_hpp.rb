@@ -27,7 +27,7 @@ module Spree
 
     # Indicates whether its possible to void the payment.
     def can_void?(payment)
-      !payment.void?
+      payment.pending? || payment.checkout?
     end
 
     # Indicates whether its possible to capture the payment

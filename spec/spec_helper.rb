@@ -27,6 +27,7 @@ end
 RSpec.configure do |config|
   config.color = true
   config.infer_spec_type_from_file_location!
+  config.example_status_persistence_file_path = "spec/examples.txt"
   config.mock_with :rspec
   config.use_transactional_fixtures = true
 

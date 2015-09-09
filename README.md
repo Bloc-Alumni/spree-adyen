@@ -176,6 +176,16 @@ bundle exec rspec spec --tag external
 
 https://support.adyen.com/index.php?/Knowledgebase/Article/View/11/0/test-card-numbers
 
+## Terminology and other API information
+[More info about Adyen can be found here](https://docs.adyen.com/display/TD/3D+Secure).
+Includes information about the adyen soap api and the parameters that it accepts.
+
+**e.g.**
+> paRequest, md, issuerUrl, resultCode, PaReq, MD, TermUrL, etc.
+
+If you find some variable that is not documented in the gem, it's likely
+defined here.
+
 ## Contributing
 
 1. Fork it
